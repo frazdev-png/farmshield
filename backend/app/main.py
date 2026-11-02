@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
                 farmer_user = User(
                     full_name="Muhammad Tariq (Farmer)",
                     email="farmer@farmshield.ai",
-                    phone_number="+923001234567",
+                    phone_number="+923116310515",
                     password_hash=hash_password("Password123!"),
                     role="farmer",
                     is_active=True,

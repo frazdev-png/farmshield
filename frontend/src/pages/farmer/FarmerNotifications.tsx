@@ -82,7 +82,7 @@ export const FarmerNotifications: React.FC = () => {
       const newNotif = await api.notifications.simulateTestAlert();
       setNotifications((prev) => [newNotif, ...prev]);
       setSimulatedAlertBanner(
-        `⚡ Simulated Hazard Alert Generated & SMS Dispatched! To: ${newNotif.masked_phone_number || '+92300****123'} | SNS Status: ${newNotif.status.toUpperCase()} (MessageId: ${newNotif.sns_message_id}) | Time: ${formatTimestamp(newNotif.created_at)}`
+        `⚡ Simulated Hazard Alert Generated & SMS Dispatched! To: ${newNotif.masked_phone_number || '+92311****515'} | SNS Status: ${newNotif.status.toUpperCase()} (MessageId: ${newNotif.sns_message_id}) | Time: ${formatTimestamp(newNotif.created_at)}`
       );
       setTimeout(() => setSimulatedAlertBanner(null), 8000);
     } catch (err: any) {

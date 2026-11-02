@@ -171,7 +171,7 @@ def simulate_hazard_alert_and_sms(
         f"High frost risk detected. Apply light evening irrigation to protect root zones and shield young nurseries."
     )
 
-    phone = current_user.phone_number or "+923001234567"
+    phone = current_user.phone_number or "+923116310515"
     masked_phone = mask_phone_number(phone)
 
     # 3. Dispatch SMS via AWS SNS provider
