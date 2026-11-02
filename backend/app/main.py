@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
         Base.metadata.create_all(bind=engine)
 
         from app.models.user import User
-        from app.core.security import get_password_hash
+        from app.core.security import hash_password
         db = SessionLocal()
         try:
             admin_user = db.query(User).filter(User.email == "admin@farmshield.ai").first()
@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
                     full_name="Platform Administrator",
                     email="admin@farmshield.ai",
                     phone_number="+923000000000",
-                    password_hash=get_password_hash("Password123!"),
+                    password_hash=hash_password("Password123!"),
                     role="admin",
                     is_active=True,
                 )
@@ -67,6 +67,17 @@ register_error_handlers(app)
 
 # Include API v1 router
 app.include_router(api_v1_router, prefix=settings.API_V1_PREFIX)
+
+
+@app.get("/", tags=["Root"], summary="Root Landing Status")
+def root_index():
+    return {
+        "status": "online",
+        "service": settings.APP_NAME,
+        "version": settings.APP_VERSION,
+        "health": "/health",
+        "api_v1": settings.API_V1_PREFIX,
+    }
 
 
 @app.get("/health", tags=["Health"], summary="Root Infrastructure Health Check")
