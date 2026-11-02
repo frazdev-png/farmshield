@@ -2,6 +2,7 @@ import uuid
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
+from sqlalchemy import select, desc
 
 from app.core.database import get_db
 from app.api.deps import get_current_active_user, require_admin, require_farmer
@@ -147,7 +148,6 @@ def simulate_hazard_alert_and_sms(
     to the farmer's registered phone number with exact timestamp audit.
     """
     from datetime import datetime, timezone
-    from sqlalchemy import select
     from app.models.farm import Farm
     from app.services.notification.sns_provider import SNSProvider, mask_phone_number
 
