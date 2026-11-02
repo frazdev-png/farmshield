@@ -41,9 +41,11 @@ class Settings(BaseSettings):
     STRANDS_MODEL_ID: str = "anthropic.claude-3-haiku-20240307-v1:0"
     AWS_REGION: str = "us-east-1"
     STRANDS_TIMEOUT_SECONDS: int = 30
+    ALLOW_SIMULATED_AI: bool = True
 
     # AWS SNS SMS Notification System Configuration
-    SNS_SMS_ENABLED: bool = False
+    SNS_SMS_ENABLED: bool = True
+    SNS_SMS_SIMULATE: bool = True
     SNS_SMS_SENDER_ID: Optional[str] = "FarmShield"
     SNS_SMS_MAX_PRICE: str = "0.05"  # Max price per message in USD
     SNS_SMS_TYPE: str = "Transactional"  # Transactional (high priority) or Promotional

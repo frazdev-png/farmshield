@@ -136,6 +136,21 @@ class SNSProvider:
 
         sns_client = self.client
         if sns_client is None:
+            if getattr(settings, "SNS_SMS_SIMULATE", False):
+                import uuid
+                simulated_id = f"sim-{uuid.uuid4().hex[:12]}"
+                logger.info(
+                    f"[SIMULATED AWS SNS SMS] Dispatched to {masked} via simulated gateway "
+                    f"(MessageId: {simulated_id}): '{message[:60]}...'"
+                )
+                return {
+                    "success": True,
+                    "status": "accepted",
+                    "message_id": simulated_id,
+                    "masked_phone": masked,
+                    "error": None,
+                    "is_transient": False,
+                }
             err_msg = "AWS SNS client is unavailable (missing credentials or client init failed)."
             logger.warning(err_msg)
             return {

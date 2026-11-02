@@ -48,6 +48,7 @@ def setup_test_database():
     Setup clean schema in isolated test database at session start and tear down at finish.
     Guarantees the development database is NEVER touched or reset.
     """
+    settings.APP_ENV = "testing"
     Base.metadata.create_all(bind=test_engine)
     yield
     Base.metadata.drop_all(bind=test_engine)
