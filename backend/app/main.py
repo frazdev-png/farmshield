@@ -31,6 +31,53 @@ async def lifespan(app: FastAPI):
                 )
                 db.add(admin_user)
                 db.commit()
+
+            # Seed default demo farmer with farm & crops so login always works across container deploys
+            farmer_user = db.query(User).filter(User.email == "farmer@farmshield.ai").first()
+            if not farmer_user:
+                farmer_user = User(
+                    full_name="Muhammad Tariq (Farmer)",
+                    email="farmer@farmshield.ai",
+                    phone_number="+923001234567",
+                    password_hash=hash_password("Password123!"),
+                    role="farmer",
+                    is_active=True,
+                )
+                db.add(farmer_user)
+                db.flush()
+
+                from app.models.farm import Farm, FarmCrop
+                demo_farm = Farm(
+                    farmer_id=farmer_user.id,
+                    farm_name="Green Acres Farm",
+                    district="Multan",
+                    village="Chak 42",
+                    latitude=30.1575,
+                    longitude=71.5249,
+                    total_area=12.5,
+                    area_unit="acres",
+                    soil_type="Loam",
+                )
+                db.add(demo_farm)
+                db.flush()
+
+                crop1 = FarmCrop(
+                    farm_id=demo_farm.id,
+                    crop_name="Wheat",
+                    variety="Faisalabad-2008",
+                    acreage=8.0,
+                    stage="Vegetative",
+                )
+                crop2 = FarmCrop(
+                    farm_id=demo_farm.id,
+                    crop_name="Cotton",
+                    variety="FH-142",
+                    acreage=4.5,
+                    stage="Flowering",
+                )
+                db.add(crop1)
+                db.add(crop2)
+                db.commit()
         finally:
             db.close()
     except Exception as exc:
@@ -51,9 +98,14 @@ app = FastAPI(
 )
 
 # CORS Middleware configuration - Supports local dev, Render, and AWS Amplify
+cors_origins = list(settings.CORS_ORIGINS) if isinstance(settings.CORS_ORIGINS, list) else ["*"]
+amplify_origin = "https://main.d3mw37v5rzxeqy.amplifyapp.com"
+if amplify_origin not in cors_origins:
+    cors_origins.append(amplify_origin)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS if settings.CORS_ORIGINS else ["*"],
+    allow_origins=cors_origins,
     allow_origin_regex=r"https://.*\.amplifyapp\.com|https://.*\.onrender\.com|http://localhost.*|http://127\.0\.0\.1.*",
     allow_credentials=True,
     allow_methods=["*"],

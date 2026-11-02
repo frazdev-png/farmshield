@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Lock, Mail, ArrowRight, Info, XCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Shield, Lock, Mail, ArrowRight, Info, XCircle, CheckCircle, Loader2, Sprout } from 'lucide-react';
 import type { NavigationTab } from '../../types';
 import { useAuth } from '../../context/useAuth';
 
@@ -10,7 +10,6 @@ interface LoginPageProps {
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, targetNotice }) => {
   const { login } = useAuth();
-  const isDev = import.meta.env.DEV;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -101,31 +100,45 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, targetNotice }
           </div>
         )}
 
-        {/* Quick Helper Presets (Development Only - Hidden in Production) */}
-        {isDev && (
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
-                Platform Administrator Login:
-              </span>
-              <span className="text-[10px] text-slate-400 font-mono">Password: Password123!</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => handlePresetSelect('admin@farmshield.ai', 'Password123!')}
-              className="w-full py-2 px-3 bg-white border border-slate-200 rounded-lg text-slate-700 hover:border-purple-500 hover:text-purple-700 text-left font-medium text-[11px] flex items-center justify-between transition-colors"
-            >
-              <div className="flex items-center space-x-2">
-                <Shield className="w-4 h-4 text-purple-600 shrink-0" />
-                <div>
-                  <span className="block font-semibold">Fill Admin Credentials</span>
-                  <span className="text-[10px] text-slate-400 block font-mono">admin@farmshield.ai</span>
-                </div>
-              </div>
-              <span className="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded font-bold">ADMIN CONSOLE</span>
-            </button>
+        {/* Quick Helper Presets */}
+        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
+              Quick Demo Accounts:
+            </span>
+            <span className="text-[10px] text-slate-400 font-mono">Password: Password123!</span>
           </div>
-        )}
+
+          <button
+            type="button"
+            onClick={() => handlePresetSelect('farmer@farmshield.ai', 'Password123!')}
+            className="w-full py-2 px-3 bg-white border border-slate-200 rounded-lg text-slate-700 hover:border-emerald-500 hover:text-emerald-700 text-left font-medium text-[11px] flex items-center justify-between transition-colors shadow-xs"
+          >
+            <div className="flex items-center space-x-2">
+              <Sprout className="w-4 h-4 text-emerald-600 shrink-0" />
+              <div>
+                <span className="block font-semibold">Demo Farmer (Multan)</span>
+                <span className="text-[10px] text-slate-400 block font-mono">farmer@farmshield.ai</span>
+              </div>
+            </div>
+            <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-bold">FARMER PORTAL</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handlePresetSelect('admin@farmshield.ai', 'Password123!')}
+            className="w-full py-2 px-3 bg-white border border-slate-200 rounded-lg text-slate-700 hover:border-purple-500 hover:text-purple-700 text-left font-medium text-[11px] flex items-center justify-between transition-colors shadow-xs"
+          >
+            <div className="flex items-center space-x-2">
+              <Shield className="w-4 h-4 text-purple-600 shrink-0" />
+              <div>
+                <span className="block font-semibold">Platform Administrator</span>
+                <span className="text-[10px] text-slate-400 block font-mono">admin@farmshield.ai</span>
+              </div>
+            </div>
+            <span className="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded font-bold">ADMIN CONSOLE</span>
+          </button>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div>
