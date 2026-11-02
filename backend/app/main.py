@@ -50,14 +50,12 @@ app = FastAPI(
     redoc_url="/redoc" if settings.DEBUG else None,
 )
 
-# CORS Middleware configuration
-cors_allow_origins = settings.CORS_ORIGINS if settings.CORS_ORIGINS else ["*"]
-allow_all_origins = "*" in cors_allow_origins
-
+# CORS Middleware configuration - Supports local dev, Render, and AWS Amplify
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if allow_all_origins else cors_allow_origins,
-    allow_credentials=not allow_all_origins,
+    allow_origins=settings.CORS_ORIGINS if settings.CORS_ORIGINS else ["*"],
+    allow_origin_regex=r"https://.*\.amplifyapp\.com|https://.*\.onrender\.com|http://localhost.*|http://127\.0\.0\.1.*",
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
