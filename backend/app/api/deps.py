@@ -85,16 +85,17 @@ def get_current_active_user(
 def require_role(allowed_roles: Union[str, List[str]]) -> Callable[[User], User]:
     """
     Dependency factory that restricts route access to specific roles.
+    Administrators possess supervisory access across farmer endpoints.
     """
     roles = [allowed_roles] if isinstance(allowed_roles, str) else allowed_roles
 
     def role_checker(current_user: User = Depends(get_current_active_user)) -> User:
-        if current_user.role not in roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Access forbidden: requires one of the following roles: {', '.join(roles)}.",
-            )
-        return current_user
+        if current_user.role == "admin" or current_user.role in roles:
+            return current_user
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access forbidden: requires one of the following roles: {', '.join(roles)}.",
+        )
 
     return role_checker
 

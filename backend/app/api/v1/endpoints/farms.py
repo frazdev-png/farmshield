@@ -32,7 +32,7 @@ def convert_area(val: float, from_unit: str, to_unit: str) -> float:
 
 
 def get_farmer_farm(farm_id: uuid.UUID, farmer_id: uuid.UUID, db: Session) -> Farm:
-    """Enforces farm existence and strict ownership by the authenticated farmer."""
+    """Enforces farm existence and strict ownership by the authenticated farmer, permitting admin supervisor access."""
     farm = db.scalar(select(Farm).where(Farm.id == farm_id))
     if not farm:
         raise HTTPException(
@@ -40,6 +40,9 @@ def get_farmer_farm(farm_id: uuid.UUID, farmer_id: uuid.UUID, db: Session) -> Fa
             detail="Farm not found.",
         )
     if farm.farmer_id != farmer_id:
+        user = db.get(User, farmer_id)
+        if user and user.role == "admin":
+            return farm
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied: You do not own this farm.",
@@ -115,12 +118,15 @@ def list_farms(
     current_user: User = Depends(require_farmer),
     db: Session = Depends(get_db),
 ):
-    """Retrieves all farms owned exclusively by the authenticated farmer."""
-    stmt = (
-        select(Farm)
-        .where(Farm.farmer_id == current_user.id)
-        .order_by(Farm.created_at.desc())
-    )
+    """Retrieves all farms owned exclusively by the authenticated farmer (or all farms if admin)."""
+    if current_user.role == "admin":
+        stmt = select(Farm).order_by(Farm.created_at.desc())
+    else:
+        stmt = (
+            select(Farm)
+            .where(Farm.farmer_id == current_user.id)
+            .order_by(Farm.created_at.desc())
+        )
     farms = db.scalars(stmt).all()
     return [build_farm_response(f) for f in farms]
 

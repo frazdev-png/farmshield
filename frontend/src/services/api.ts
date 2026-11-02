@@ -314,6 +314,10 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify(payload),
       }),
+    simulateTestAlert: () =>
+      request<NotificationItem>('/api/v1/notifications/simulate-alert', {
+        method: 'POST',
+      }),
   },
 
   // Admin Operations endpoints

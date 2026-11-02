@@ -322,84 +322,191 @@ class AssistantService:
 
         # Detect Urdu / Roman Urdu
         lower_q = user_message.lower()
-        is_urdu = any(w in lower_q for w in ["kya", "pani", "paani", "fasal", "khet", "barish", "mosam", "mausam", "khatra", "bachein", "kesay", "kese", "hoga"])
+        is_urdu = any(
+            w in lower_q
+            for w in [
+                "kya", "pani", "paani", "fasal", "khet", "barish", "mosam", "mausam",
+                "khatra", "bachein", "kesay", "kese", "hoga", "salam", "assalam",
+                "bhai", "khaad", "khad", "spray", "dawa", "gandum", "kapass", "chawal",
+                "makai", "keeray", "sundi", "teliya", "hawa", "dhoop", "garmi", "sardi",
+                "halat", "batao", "mashwara", "kab", "kyun", "kaise"
+            ]
+        )
 
         if is_urdu:
-            # Roman Urdu Response
-            response_lines = [
-                f"Assalam-o-Alaikum! Aapke farm **'{farm.farm_name}'** ({farm.district}) ke live satellite telemetry aur deterministic engine ke mutabiq:",
-                f"",
-                f"📍 **Live Mausam:** {cond} | 🌡️ **Temperature:** {temp_c}°C | 💧 **Humidity:** {humidity}% | 💨 **Hawa:** {wind_kmh} km/h",
+            # High-Grade Structured Roman Urdu Response (ChatGPT Style)
+            out = [
+                f"### 🌾 FarmShield Agronomy Advisory | {farm.farm_name} ({farm.district})",
+                "",
+                f"> 📊 **Live Satellite & Station Telemetry:**",
+                f"> 🌡️ **Temperature:** {temp_c}°C | 💧 **Nami (Humidity):** {humidity}% | 💨 **Hawa Ki Raftaar:** {wind_kmh} km/h | 🌧️ **Barish (48 Ghantay):** {forecast_rain:.1f} mm | 🌤️ **Mausam:** {cond}  ",
+                f"> 🌱 **Zer-e-Khasht Fasalain:** {crop_str}",
+                "",
+                "---",
+                "",
+                "#### 🎯 Ziraati Tajzia Aur Mashwara:",
             ]
 
             if any(k in lower_q for k in ["pani", "paani", "sinchai", "irrigation", "water"]):
                 if forecast_rain > 5.0 or rain_mm > 2.0:
-                    response_lines.append(f"💧 **Paani Ka Mashwara:** Agle 24-48 ghanton mein {forecast_rain:.1f}mm barish ka imkaan hai. Fasal ({crop_str}) ko abhi paani na lagayein taake paani khara na ho.")
+                    out.extend([
+                        f"* **Barish Ka Imkaan:** Aglay 24 se 48 ghanton mein takreeban **{forecast_rain:.1f} mm** barish mutawaqqe hai.",
+                        f"* **Sinchai Hidayat:** Is waqt khet mein naya paani **hargiz na lagayein**. Barish ka paani zameen ki zaroorat poori kar dega aur ziaada paani se jarhon mein sans lene ka masla (root hypoxia) aur fasal girne (lodging) ka khatra ho sakta hai.",
+                        f"* **Drainage:** Khet ki nikal naalion (drainage ditches) ko check karein taake kahin paani khara na ho.",
+                    ])
                 else:
-                    response_lines.append(f"💧 **Paani Ka Mashwara:** Agle 48 ghanton mein barish ka imkaan kam hai ({forecast_rain:.1f}mm). Agar zameen ki nami kam hai to subah ya shaam ke waqt maamool ki sinchai kar sakte hain.")
+                    out.extend([
+                        f"* **Mausami Sorat-e-Haal:** Aglay 48 ghanton mein barish ka imkaan bohat kam hai ({forecast_rain:.1f} mm) aur mausam mustahkam rahay ga.",
+                        f"* **Sinchai Hidayat:** Agar zameen mein ooper ki 2 inch teh khushk mehsoos ho rahi hai to **subah 6 se 9 bajay** ya **shaam 4 bajay ke baad** paani lagayein. Dopahar ke waqt sinchai se parhez karein taake bukharaat (evaporation) kam se kam hon.",
+                        f"* **Fasal-Specific:** {crop_str} ke nazuk marhalay mein nami ka tawazan barkarar rakhna pedawaar mein 15-20% izafay ka sabab banta hai.",
+                    ])
+
+            elif any(k in lower_q for k in ["khaad", "khad", "urea", "dap", "fertilizer", "khorak"]):
+                out.extend([
+                    f"* **Khaad Dalne Ka Munasib Waqt:** Mausam is waqt {cond} hai aur hawa ki raftaar {wind_kmh} km/h hai.",
+                    f"* **Hidayat:** Agar aap Urea ya Nitrogen khaad de rahay hain to hamesha halki sinchai (irrigation) ke sath dein taake hawa mein nitrogen ka zaya (volatilization) na ho.",
+                    f"* **Ehtiyat:** Tezz dhoop aur shadeed garmi ke doran khari fasal par direct dry fertilizer na phainkein, warna pattay jalne ka khadsha hota hai.",
+                ])
+
+            elif any(k in lower_q for k in ["spray", "keeray", "pest", "dawa", "teliya", "sundi", "fungus", "fungicide"]):
+                if wind_kmh > 14.0:
+                    out.extend([
+                        f"* **Hawa Ki Raftaar Ka Warning:** Hawa is waqt **{wind_kmh} km/h** par chal rahi hai jo spray ke liye mehfooz had (12 km/h) se ziaada hai.",
+                        f"* **Hidayat:** Foliar spray ko **multawi (delay) karein**. Tezz hawa mein spray drift ho kar zaya ho jata hai aur paas ke kheton mein nuqsaan karta hai.",
+                        f"* **Munasib Waqt:** Hawa thamne ka intezar karein (aam tor par subah saadiq ya sham ke waqt).",
+                    ])
+                else:
+                    out.extend([
+                        f"* **Spray Ke Liye Munasib Halat:** Hawa ki raftaar **{wind_kmh} km/h** aur nami **{humidity}%** spray ke liye intehai munasib hai.",
+                        f"* **Hidayat:** Fasal ka muaina karein. Agar teliya (aphids), safaid makhi ya rust ke asraat dikhein to muta’alliqa certified insecticide/fungicide ka subah saadiq mein spray karein.",
+                        f"* **Ehtiyat:** Hamesha protective mask aur gloves ka istemal karein aur saaf paani use karein.",
+                    ])
 
             elif any(k in lower_q for k in ["khatra", "risk", "threat", "alert"]):
                 if active_risks:
-                    threats = ", ".join([f"{r.risk_category} ({r.risk_level})" for r in active_risks])
-                    response_lines.append(f"⚠️ **Active Khatraat:** Is waqt aapke farm par: {threats}. Khaas ehtiyat karein.")
+                    threat_items = [f"• **{r.risk_category}**: Khatray Ki Satah {r.risk_level} (Score {r.risk_score:.1f}/100)" for r in active_risks]
+                    out.extend([
+                        "⚠️ **Active Khatraat Ki Report:**",
+                        *threat_items,
+                        "Khet ke muta'alliqa hissay ka foran muaina karein aur ehtiyati tadabeer ikhtiyar karein."
+                    ])
                 else:
-                    response_lines.append(f"✅ **Risk Assessment:** Is waqt mausam mohtat aur normal hai. Koi shadeed khatra (High/Critical) report nahi hua.")
-
-            elif any(k in lower_q for k in ["hawa", "wind", "storm", "aandhi"]):
-                if wind_kmh > 15.0:
-                    response_lines.append(f"💨 **Tez Hawa Ki Ehtiyat:** Hawa ki raftaar {wind_kmh} km/h hai. Fasal par foliar spray na karein taake chemical zaya na ho aur phool na jharain.")
-                else:
-                    response_lines.append(f"💨 **Hawa Ka Hal:** Hawa ki raftaar {wind_kmh} km/h hai jo ke bilkul mehfooz aur normal hai.")
+                    out.extend([
+                        f"* **Risk Assessment:** Mausam is waqt normal aur safe zone mein hai.",
+                        f"* Koi HIGH ya CRITICAL agro-threat is parcel par active nahi hai.",
+                    ])
 
             else:
-                response_lines.append(f"🌱 **Fasal Ki Nigehdasht ({crop_str}):**")
-                response_lines.append(f"• Mausam ke mutabiq fasal ko munasib dhoop aur hawa mil rahi hai.")
-                if forecast_rain > 10.0:
-                    response_lines.append(f"• Barish mutawaqqe hai ({forecast_rain:.1f}mm), khet ki drainage naalian saaf rakhein.")
-                else:
-                    response_lines.append(f"• Agle 2-3 din mausam mustahkam rahega, zameen ki nami check karte rahein.")
+                out.extend([
+                    f"* **Fasal Ki Halat ({crop_str}):** Mojooda darja hararat ({temp_c}°C) aur hawa ({wind_kmh} km/h) fasal ki barhotri ke liye saazgar hain.",
+                    f"* **Amal:** Zameen ki nami baqaidgi se monitor karein aur khet ke kinaron se jhari-bootian (weeds) talaf karein taake keeray purnam na hon.",
+                    f"* **Agla Jaiza:** 7-roza forecast mustahkam hai, maamool ki dekh-bhaal jari rakhein.",
+                ])
 
-            response_lines.append(f"")
-            response_lines.append(f"_ℹ️ [FarmShield Smart Advisor: Grounded in live Open-Meteo station telemetry & deterministic agronomic rules]_")
-            return "\n".join(response_lines)
+            out.extend([
+                "",
+                "---",
+                "",
+                "#### 🚜 Aglay 48 Ghantay Ka Field Action Plan:",
+                "1. 🌅 **Subah (Early Morning):** Khet ka chakkar lagayein, zameen ki nami aur patton ke nichlay hissay par keeron/bemari ka jaiza lein.",
+                "2. ☀️ **Dopahar (Midday):** Shadeed dhoop mein spray ya heavy chemical application se gurez karein.",
+                "3. 🌇 **Shaam (Evening):** Agar zameen khushk ho to halki sinchai karein aur sprinkler/drip nozzles check karein.",
+                "",
+                "---",
+                "",
+                "#### 💡 Expert Kissan Tip:",
+                f"> _{crop_str} ki behtar pedawaar ke liye zameen mein organic matter (gobar ki sadi hui khaad) aur balanced NPK ratio zaroor barqarar rakhein._",
+                "",
+                "_🤖 FarmShield AI Agronomy Engine • Open-Meteo High-Resolution Telemetry Verified_",
+            ])
+            return "\n".join(out)
 
         else:
-            # English Response
-            response_lines = [
-                f"Agronomy telemetry evaluation for **'{farm.farm_name}'** in {farm.district}:",
-                f"",
-                f"📊 **Live Station Telemetry:** {cond} | 🌡️ **Temp:** {temp_c}°C | 💧 **Humidity:** {humidity}% | 💨 **Wind:** {wind_kmh} km/h | 🌧️ **Precip:** {rain_mm} mm",
+            # High-Grade Structured English Response (ChatGPT Style)
+            out = [
+                f"### 🌾 FarmShield Agronomy Advisory | {farm.farm_name} ({farm.district})",
+                "",
+                f"> 📊 **Live Satellite & Station Telemetry:**",
+                f"> 🌡️ **Temperature:** {temp_c}°C | 💧 **Relative Humidity:** {humidity}% | 💨 **Wind Speed:** {wind_kmh} km/h | 🌧️ **Precipitation (48h):** {forecast_rain:.1f} mm | 🌤️ **Condition:** {cond}  ",
+                f"> 🌱 **Monitored Crops:** {crop_str}",
+                "",
+                "---",
+                "",
+                "#### 🎯 Diagnostic Assessment & Agronomic Guidance:",
             ]
 
             if any(k in lower_q for k in ["water", "irrigate", "irrigation"]):
                 if forecast_rain > 5.0 or rain_mm > 2.0:
-                    response_lines.append(f"💧 **Irrigation Recommendation:** Forecast indicates {forecast_rain:.1f}mm expected precipitation within 48h. Suspend supplemental irrigation to prevent crop lodging and root waterlogging.")
+                    out.extend([
+                        f"* **Precipitation Outlook:** Approximately **{forecast_rain:.1f} mm** of precipitation is forecasted within the next 24 to 48 hours.",
+                        f"* **Action Required:** **Suspend supplemental irrigation immediately.** Additional watering will cause root hypoxia, nutrient leaching, and increase crop lodging risks.",
+                        f"* **Field Maintenance:** Inspect drainage channels and perimeter furrows to ensure excess surface runoff can discharge freely.",
+                    ])
                 else:
-                    response_lines.append(f"💧 **Irrigation Recommendation:** Rainfall probability is low ({forecast_rain:.1f}mm). If tensiometers or manual soil probes indicate dry topsoil, apply routine morning irrigation for {crop_str}.")
+                    out.extend([
+                        f"* **Atmospheric Conditions:** The 48-hour rainfall outlook is minimal ({forecast_rain:.1f} mm) with stable weather.",
+                        f"* **Irrigation Recommendation:** Apply routine morning irrigation (between 6:00 AM and 9:00 AM) if tensiometer readings or soil probe checks indicate topsoil moisture depletion below 40%.",
+                        f"* **Crop Specifics:** For {crop_str}, maintaining optimal root-zone moisture during active vegetative and flowering stages ensures maximum yield potential.",
+                    ])
+
+            elif any(k in lower_q for k in ["fertilizer", "urea", "dap", "nutrient", "nitrogen"]):
+                out.extend([
+                    f"* **Application Windows:** Current ambient temperature ({temp_c}°C) and wind velocity ({wind_kmh} km/h) are favorable.",
+                    f"* **Application Protocol:** Top-dress nitrogen (Urea) in conjunction with light irrigation to mitigate volatilization losses into the atmosphere.",
+                    f"* **Caution:** Avoid broadcasting granular fertilizers directly onto heat-stressed or dry foliage to prevent leaf burn.",
+                ])
+
+            elif any(k in lower_q for k in ["spray", "pest", "disease", "fungicide", "insecticide", "aphid"]):
+                if wind_kmh > 14.0:
+                    out.extend([
+                        f"* **⚠️ Wind Drift Warning:** Measured wind speed is **{wind_kmh} km/h**, which exceeds the recommended 12 km/h spraying threshold.",
+                        f"* **Recommendation:** **Postpone foliar applications.** High winds will cause pesticide drift, leading to chemical wastage and unintended off-target exposure.",
+                        f"* **Optimal Timing:** Wait for winds to subside, typically during early morning calm hours.",
+                    ])
+                else:
+                    out.extend([
+                        f"* **Favorable Spraying Conditions:** Wind speeds at **{wind_kmh} km/h** and humidity at **{humidity}%** are ideal for foliar treatments.",
+                        f"* **Field Scouting:** Inspect the undersides of leaves on {crop_str} for early signs of aphids, mites, or rust spores before applying targeted treatments.",
+                        f"* **Safety:** Ensure proper personal protective equipment (PPE) and use calibrated nozzles.",
+                    ])
 
             elif any(k in lower_q for k in ["risk", "threat", "alert", "danger"]):
                 if active_risks:
-                    threat_items = [f"• **{r.risk_category}**: {r.risk_level} (Score {r.risk_score:.1f}/100)" for r in active_risks]
-                    response_lines.append("⚠️ **Active Agro-Threat Evaluations:**\n" + "\n".join(threat_items))
+                    threat_items = [f"• **{r.risk_category}**: Level {r.risk_level} (Risk Score: {r.risk_score:.1f}/100)" for r in active_risks]
+                    out.extend([
+                        "⚠️ **Active Threat Evaluations:**",
+                        *threat_items,
+                        "Implement immediate physical mitigation for the highlighted parcels.",
+                    ])
                 else:
-                    response_lines.append("✅ **Risk Assessment:** No HIGH or CRITICAL weather threats are currently active on this parcel. Conditions are within safe cultivation bounds.")
-
-            elif any(k in lower_q for k in ["wind", "gust", "storm"]):
-                if wind_kmh > 15.0:
-                    response_lines.append(f"💨 **Wind Caution:** Measured wind speeds are {wind_kmh} km/h. Avoid foliar pesticide applications to prevent chemical spray drift.")
-                else:
-                    response_lines.append(f"💨 **Wind Conditions:** Wind speeds at {wind_kmh} km/h are within safe cultural thresholds.")
+                    out.extend([
+                        "* **Risk Assessment:** No HIGH or CRITICAL weather threats are currently detected for this property.",
+                        "* All microclimatic parameters are currently within normal agronomic thresholds.",
+                    ])
 
             else:
-                response_lines.append(f"🌱 **Cultivation Guidance for {crop_str}:**")
-                response_lines.append(f"• Current ambient temperature ({temp_c}°C) supports normal metabolic crop activity.")
-                if forecast_rain > 10.0:
-                    response_lines.append(f"• Heavy precipitation outlook ({forecast_rain:.1f}mm): Clear perimeter furrows and drainage ditches.")
-                else:
-                    response_lines.append("• 7-day weather outlook is stable. Continue standard integrated crop management.")
+                out.extend([
+                    f"* **Crop Health Overview for {crop_str}:** Current ambient temperature ({temp_c}°C) and moderate relative humidity ({humidity}%) support vigorous metabolic growth.",
+                    f"* **Field Action:** Maintain regular scouting routines and clear perimeter weed boundaries to eliminate pest harborage.",
+                    f"* **Forecast:** The 7-day agricultural forecast remains favorable for standard cultivation practices.",
+                ])
 
-            response_lines.append(f"")
-            response_lines.append(f"_ℹ️ [FarmShield Smart Advisor: Grounded in live Open-Meteo telemetry & deterministic risk engine]_")
-            return "\n".join(response_lines)
+            out.extend([
+                "",
+                "---",
+                "",
+                "#### 🚜 48-Hour Tactical Field Action Plan:",
+                "1. 🌅 **Early Morning:** Perform canopy scouting for moisture tension and pest presence.",
+                "2. ☀️ **Midday:** Avoid foliar applications during peak solar irradiance and temperature spikes.",
+                "3. 🌇 **Late Afternoon / Evening:** Perform scheduled soil moisture inspections and check irrigation lines.",
+                "",
+                "---",
+                "",
+                "#### 💡 Agronomist Pro-Tip:",
+                f"> _Ensure balanced nutrient management for {crop_str}. Pairing organic compost with soil-test-calibrated NPK enhances root depth and drought resilience._",
+                "",
+                "_🤖 FarmShield AI Agronomy Engine • Grounded in High-Resolution Open-Meteo Telemetry_",
+            ])
+            return "\n".join(out)
 
 

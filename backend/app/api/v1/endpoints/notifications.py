@@ -137,6 +137,72 @@ def mark_all_notifications_as_read(
     )
 
 
+@router.post("/simulate-alert", response_model=NotificationResponse)
+def simulate_hazard_alert_and_sms(
+    current_user: User = Depends(require_farmer),
+    db: Session = Depends(get_db),
+):
+    """
+    Simulates a high-priority agro-climatic hazard alert and triggers immediate AWS SNS SMS dispatch 
+    to the farmer's registered phone number with exact timestamp audit.
+    """
+    from datetime import datetime, timezone
+    from sqlalchemy import select
+    from app.models.farm import Farm
+    from app.services.notification.sns_provider import SNSProvider, mask_phone_number
+
+    # 1. Fetch user's farm
+    farm = db.scalar(
+        select(Farm)
+        .where(Farm.farmer_id == current_user.id)
+        .order_by(Farm.created_at.desc())
+    )
+    if not farm and current_user.role == "admin":
+        farm = db.scalar(select(Farm).order_by(Farm.created_at.desc()))
+
+    farm_name = farm.farm_name if farm else "Green Acres Farm"
+    district = farm.district if farm else "Multan"
+    now_utc = datetime.now(timezone.utc)
+
+    # 2. Craft high-priority alert message
+    alert_title = "⚡ Frost & Sudden Temperature Drop Alert"
+    alert_msg = (
+        f"FarmShield Advisory for {farm_name} ({district}): Night temperatures expected to drop rapidly to 3.5°C. "
+        f"High frost risk detected. Apply light evening irrigation to protect root zones and shield young nurseries."
+    )
+
+    phone = current_user.phone_number or "+923001234567"
+    masked_phone = mask_phone_number(phone)
+
+    # 3. Dispatch SMS via AWS SNS provider
+    sns = SNSProvider()
+    sms_res = sns.send_sms(phone, alert_msg)
+
+    # 4. Create and persist Notification
+    notif = Notification(
+        farmer_id=current_user.id,
+        farm_id=farm.id if farm else None,
+        notification_type="hazard_alert",
+        title=alert_title,
+        message=alert_msg,
+        severity="HIGH",
+        channel="both",
+        is_read=False,
+        status=sms_res.get("status", "accepted"),
+        sns_message_id=sms_res.get("message_id") or f"sim-{uuid.uuid4().hex[:12]}",
+        masked_phone_number=masked_phone,
+        delivery_attempts=1,
+        last_attempt_at=now_utc,
+        error_message=sms_res.get("error"),
+        created_at=now_utc,
+        updated_at=now_utc,
+    )
+    db.add(notif)
+    db.commit()
+    db.refresh(notif)
+    return notif
+
+
 # ---------------------------------------------------------
 # Admin Notification Endpoints
 # ---------------------------------------------------------
