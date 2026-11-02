@@ -45,3 +45,4 @@ services:
           type: web
           name: farmshield-backend
           property: host
+
