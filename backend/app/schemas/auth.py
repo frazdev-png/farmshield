@@ -56,7 +56,7 @@ class UserRegisterRequest(BaseModel):
 
 
 class UserLoginRequest(BaseModel):
-    email: EmailStr = Field(..., description="Account email address")
+    email: str = Field(..., min_length=1, max_length=100, description="Account email address or phone number")
     password: str = Field(..., min_length=1, description="Account password")
 
     @field_validator("email", mode="before")

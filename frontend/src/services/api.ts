@@ -118,11 +118,24 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
       if (typeof errorBody === 'object' && errorBody !== null) {
         if (errorBody.error && typeof errorBody.error.message === 'string') {
-          errorMessage = errorBody.error.message;
+          if (Array.isArray(errorBody.error.details) && errorBody.error.details.length > 0) {
+            const first = errorBody.error.details[0];
+            const field = Array.isArray(first.loc)
+              ? first.loc.filter((l: any) => l !== 'body').join('.')
+              : '';
+            const specificMsg = first.msg || errorBody.error.message;
+            errorMessage = field ? `${field}: ${specificMsg}` : specificMsg;
+          } else {
+            errorMessage = errorBody.error.message;
+          }
         } else if (typeof errorBody.detail === 'string') {
           errorMessage = errorBody.detail;
         } else if (Array.isArray(errorBody.detail) && errorBody.detail.length > 0) {
-          errorMessage = errorBody.detail[0].msg || errorMessage;
+          const first = errorBody.detail[0];
+          const field = Array.isArray(first.loc)
+            ? first.loc.filter((l: any) => l !== 'body').join('.')
+            : '';
+          errorMessage = field ? `${field}: ${first.msg}` : (first.msg || errorMessage);
         }
       } else if (typeof errorBody === 'string' && errorBody.trim().length > 0) {
         errorMessage = errorBody;

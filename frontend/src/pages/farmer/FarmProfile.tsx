@@ -85,7 +85,13 @@ export const FarmProfile: React.FC = () => {
     setIsSaving(true);
     setErrorMessage(null);
     try {
-      const created = await api.farms.create(newFarm);
+      const payload: FarmCreatePayload = {
+        ...newFarm,
+        farm_name: newFarm.farm_name.trim(),
+        district: newFarm.district.trim(),
+        village: newFarm.village.trim() || 'Central',
+      };
+      const created = await api.farms.create(payload);
       setShowCreateModal(false);
       setSuccessMessage(`Farm "${created.farm_name}" created successfully!`);
       await loadFarms();

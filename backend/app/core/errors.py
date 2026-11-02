@@ -27,13 +27,24 @@ def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
         logger.warning(f"Validation error on {request.url.path}: {exc.errors()}")
+        err_list = exc.errors()
+        err_msg = "Validation error in request payload or parameters."
+        if err_list:
+            first_err = err_list[0]
+            loc = ".".join(str(x) for x in first_err.get("loc", []) if x not in ("body",))
+            msg = first_err.get("msg", "")
+            if loc and msg:
+                err_msg = f"{loc}: {msg}"
+            elif msg:
+                err_msg = msg
+
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content={
                 "success": False,
                 "error": {
                     "code": 422,
-                    "message": "Validation error in request payload or parameters.",
+                    "message": err_msg,
                     "details": jsonable_encoder(exc.errors()),
                     "path": request.url.path,
                 },

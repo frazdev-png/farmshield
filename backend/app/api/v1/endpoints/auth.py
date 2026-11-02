@@ -121,8 +121,12 @@ def login(
     response: Response,
     db: Session = Depends(get_db),
 ):
-    # Lookup by normalized email
-    user = db.scalar(select(User).where(User.email == payload.email))
+    # Lookup by normalized email or phone number
+    user = db.scalar(
+        select(User).where(
+            (User.email == payload.email) | (User.phone_number == payload.email)
+        )
+    )
 
     # Generic error message to prevent account enumeration
     if not user or not verify_password(payload.password, user.password_hash):
