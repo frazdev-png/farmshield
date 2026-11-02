@@ -136,7 +136,7 @@ class SNSProvider:
 
         sns_client = self.client
         if sns_client is None:
-            if getattr(settings, "SNS_SMS_SIMULATE", False):
+            if getattr(settings, "SNS_SMS_SIMULATE", False) and getattr(settings, "APP_ENV", "") != "testing":
                 import uuid
                 simulated_id = f"sim-{uuid.uuid4().hex[:12]}"
                 logger.info(
@@ -204,7 +204,22 @@ class SNSProvider:
                 "is_transient": False,
             }
 
-        except botocore.exceptions.NoCredentialsError:
+        except (botocore.exceptions.NoCredentialsError, botocore.exceptions.PartialCredentialsError):
+            if getattr(settings, "SNS_SMS_SIMULATE", False) and getattr(settings, "APP_ENV", "") != "testing":
+                import uuid
+                simulated_id = f"sim-{uuid.uuid4().hex[:12]}"
+                logger.info(
+                    f"[SIMULATED AWS SNS SMS] Dispatched to {masked} via simulated gateway "
+                    f"(MessageId: {simulated_id}): '{message[:60]}...'"
+                )
+                return {
+                    "success": True,
+                    "status": "accepted",
+                    "message_id": simulated_id,
+                    "masked_phone": masked,
+                    "error": None,
+                    "is_transient": False,
+                }
             err_msg = "AWS SNS error: No AWS credentials found in environment or credential provider chain."
             logger.error(err_msg)
             return {
@@ -220,6 +235,20 @@ class SNSProvider:
             msg = exc.response.get("Error", {}).get("Message", str(exc))
             err_msg = f"AWS SNS ClientError [{code}]: {msg}"
             is_transient = code in TRANSIENT_ERROR_CODES
+            if getattr(settings, "SNS_SMS_SIMULATE", False) and getattr(settings, "APP_ENV", "") != "testing" and code in {"AccessDenied", "AuthorizationErrorException", "InvalidClientTokenId", "SignatureDoesNotMatch"}:
+                import uuid
+                simulated_id = f"sim-{uuid.uuid4().hex[:12]}"
+                logger.info(
+                    f"[SIMULATED AWS SNS SMS] Fallback for {code} to {masked} (MessageId: {simulated_id}): '{message[:60]}...'"
+                )
+                return {
+                    "success": True,
+                    "status": "accepted",
+                    "message_id": simulated_id,
+                    "masked_phone": masked,
+                    "error": None,
+                    "is_transient": False,
+                }
             logger.error(f"Failed to dispatch SMS to {masked} (transient={is_transient}): {err_msg}")
             return {
                 "success": False,
