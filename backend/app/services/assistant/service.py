@@ -295,12 +295,11 @@ class AssistantService:
         active_risks = []
         try:
             risk_service = RiskService(self.db)
-            if current_weather:
-                active_risks = risk_service.evaluate_farm_risks(farm, current_weather)
-                references["risk_assessments"] = [
-                    {"category": r.risk_category, "level": r.risk_level, "score": r.risk_score}
-                    for r in active_risks
-                ]
+            active_risks = await risk_service.evaluate_farm_risks(farm)
+            references["risk_assessments"] = [
+                {"category": r.risk_category, "level": r.risk_level, "score": r.risk_score}
+                for r in active_risks
+            ]
         except Exception as e:
             logger.warning("Could not evaluate risks for simulated advisory: %s", e)
 
@@ -310,16 +309,16 @@ class AssistantService:
         crop_str = ", ".join(crop_names)
 
         # 4. Context metrics
-        temp_c = current_weather.temperature_c if current_weather else 26.5
-        humidity = current_weather.relative_humidity if current_weather else 50.0
-        wind_kmh = current_weather.wind_speed_kmh if current_weather else 8.0
-        rain_mm = current_weather.precipitation_mm if current_weather else 0.0
-        cond = current_weather.weather_condition if current_weather else "Clear sky"
+        temp_c = current_weather.temperature if current_weather and current_weather.temperature is not None else 26.5
+        humidity = current_weather.relative_humidity if current_weather and current_weather.relative_humidity is not None else 50.0
+        wind_kmh = current_weather.wind_speed if current_weather and current_weather.wind_speed is not None else 8.0
+        rain_mm = current_weather.precipitation if current_weather and current_weather.precipitation is not None else 0.0
+        cond = current_weather.weather_condition if current_weather and current_weather.weather_condition else "Clear sky"
 
         # Check rain forecast in next 48h
         forecast_rain = 0.0
-        if forecast and forecast.daily:
-            forecast_rain = sum(d.precipitation_sum_mm for d in forecast.daily[:2])
+        if forecast and isinstance(forecast, list):
+            forecast_rain = sum((getattr(d, "precipitation_sum", 0.0) or 0.0) for d in forecast[:2])
 
         # Detect Urdu / Roman Urdu
         lower_q = user_message.lower()
