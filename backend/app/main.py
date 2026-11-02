@@ -65,15 +65,15 @@ async def lifespan(app: FastAPI):
                     farm_id=demo_farm.id,
                     crop_name="Wheat",
                     variety="Faisalabad-2008",
-                    acreage=8.0,
-                    stage="Vegetative",
+                    cultivated_area=8.0,
+                    area_unit="acres",
                 )
                 crop2 = FarmCrop(
                     farm_id=demo_farm.id,
                     crop_name="Cotton",
                     variety="FH-142",
-                    acreage=4.5,
-                    stage="Flowering",
+                    cultivated_area=4.5,
+                    area_unit="acres",
                 )
                 db.add(crop1)
                 db.add(crop2)

@@ -32,7 +32,8 @@ export const FarmerOverview: React.FC<FarmerOverviewProps> = ({ onNavigate }) =>
       const farmsList = await api.farms.list();
       setFarms(farmsList);
       if (farmsList.length > 0) {
-        const activeId = selectedFarmId || farmsList[0].id;
+        const farmExists = farmsList.some((f) => f.id === selectedFarmId);
+        const activeId = selectedFarmId && farmExists ? selectedFarmId : farmsList[0].id;
         setSelectedFarmId(activeId);
         const [w, r] = await Promise.allSettled([
           api.weather.getCurrent(activeId),

@@ -34,8 +34,11 @@ export const RiskAlerts: React.FC = () => {
     try {
       const data = await api.farms.list();
       setFarms(data);
-      if (data.length > 0 && !selectedFarmId) {
-        setSelectedFarmId(data[0].id);
+      if (data.length > 0) {
+        const farmExists = data.some((f) => f.id === selectedFarmId);
+        if (!selectedFarmId || !farmExists) {
+          setSelectedFarmId(data[0].id);
+        }
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to load farms.');
